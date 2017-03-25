@@ -20,7 +20,7 @@
 .EXAMPLE
    PS> $wh = 'https://outlook.office365.com/webhook/a1269812-6d10-44b1-abc5-b84f93580ba0@9e7b80c7-d1eb-4b52-8582-76f921e416d9/IncomingWebhook/3fdd6767bae44ac58e5995547d66a4e4/f332c8d9-3397-4ac5-957b-b8e3fc465a8c'
    PS> $red = 'FF0000'
-   PS> Invoke-MicrosoftTeamsPost -WebhookURL $wh -Title 'Alert!' -MarkdownBody 'Something has broken on [Server](http://localhost/)!' -ThemeColor $red
+   PS> Invoke-MicrosoftTeamsPost -WebhookURL $wh -Title 'Alert!' -Body 'Something has broken on [Server](http://localhost/)!' -ThemeColor $red
 .NOTES
    Version:        1.0.1
    Author:         Cory Calahan
