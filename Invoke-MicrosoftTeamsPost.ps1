@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0.1
+.VERSION 1.0.2
 .GUID 1f34da03-9758-4561-8d20-755ca4d6dc2c
 .AUTHOR Cory Calahan
 .COMPANYNAME
@@ -22,13 +22,17 @@
    PS> $red = 'FF0000'
    PS> Invoke-MicrosoftTeamsPost -WebhookURL $wh -Title 'Alert!' -Body 'Something has broken on [Server](http://localhost/)!' -ThemeColor $red
 .NOTES
+   Version:        1.0.2
+   Author:         Cory Calahan
+   Date:           2017-03-27
+   Purpose/Change: Added buttons (potentialAction)
    Version:        1.0.1
    Author:         Cory Calahan
    Date:           2017-03-24
    Purpose/Change: Initial function development
 #>
 <#
-.PARAMETER WebhookURL
+.PARAMETER WebhookUri
    Webhook of Microsoft Team Channel to post against   
 .PARAMETER Title
     An optional title to add to a posting
@@ -36,6 +40,10 @@
     Content (in Markdown or basic text) of the posting
 .PARAMETER ThemeColor
     An optional HEX color code (e.g. 'EA4300') to apply to the posting
+.PARAMETER ButtonTitle
+    Text to display on button
+.PARAMETER ButtonUri
+    Link to navigate to when button is clicked from Microsoft Teams post
 #>
 function Invoke-MicrosoftTeamsPost
 {
@@ -50,15 +58,21 @@ function Invoke-MicrosoftTeamsPost
         [Parameter(Mandatory=$true,
                    Position=0,
                    ParameterSetName='Default')]
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ParameterSetName='potentialAction')]
         [ValidateNotNull()]
         [ValidateNotNullOrEmpty()]
-        [Alias('Webhook')] 
+        [Alias('Webhook','WebhookUrl')] 
         [string]
-        $WebhookURL,
+        $WebhookUri,
         # An optional title to add to a posting
         [Parameter(Mandatory=$false,
                    Position=1,
                    ParameterSetName='Default')]
+        [Parameter(Mandatory=$false,
+                   Position=1,
+                   ParameterSetName='potentialAction')]
         [AllowNull()]
         [AllowEmptyString()]
         [string]
@@ -67,6 +81,9 @@ function Invoke-MicrosoftTeamsPost
         [Parameter(Mandatory=$true,
                    Position=2,
                    ParameterSetName='Default')]
+        [Parameter(Mandatory=$true,
+                   Position=2,
+                   ParameterSetName='potentialAction')]
         [string]
         [Alias('Markdown')]
         $Body,
@@ -74,10 +91,23 @@ function Invoke-MicrosoftTeamsPost
         [Parameter(Mandatory=$false,
                    Position=3,
                    ParameterSetName='Default')]
+        [Parameter(Mandatory=$false,
+                   Position=3,
+                   ParameterSetName='potentialAction')]
         [ValidatePattern('^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')]
         [string]
         [Alias('Color')]
-        $ThemeColor
+        $ThemeColor,
+        [Parameter(Mandatory=$true,
+                   Position=4,
+                   ParameterSetName='potentialAction')]
+        [string]
+        $ButtonTitle,
+        [Parameter(Mandatory=$true,
+                   Position=5,
+                   ParameterSetName='potentialAction')]
+        [string]
+        $ButtonUri
     )
 
     Begin
@@ -89,15 +119,29 @@ function Invoke-MicrosoftTeamsPost
         if ($Title) {$data.Add('title',$Title)}
         if ($ThemeColor) { $data.Add('themeColor',$ThemeColor) }
         $data.Add('text',$Body)
+        if ($ButtonTitle)
+        {
+            $data.Add('potentialAction',@(
+                            @{
+                                '@context'='http://schema.org'
+                                '@type'='ViewAction'
+                                'name'="$ButtonTitle"
+                                'target'=@("$ButtonUri")
+                              }
+                            )
+                     )
+        }
+
+
         Write-Verbose -Message "Data to sent: $($data | Out-String)"
     }
     Process
     {
-        if ($PSCmdlet.ShouldProcess("$WebhookURL",'Posting to Microsoft Teams'))
+        if ($PSCmdlet.ShouldProcess("$WebhookUri",'Posting to Microsoft Teams'))
         {
             try
             {
-                Invoke-RestMethod -Method 'Post' -Uri "$WebhookURL" -Body (ConvertTo-Json -InputObject $data -Compress:$true) -ErrorAction 'Stop'
+                Invoke-RestMethod -Method 'Post' -Uri "$WebhookUri" -Body (ConvertTo-Json -InputObject $data -Compress:$true -Depth 10) -ErrorAction 'Stop'
             }
             catch
             {
