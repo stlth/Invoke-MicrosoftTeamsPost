@@ -20,12 +20,12 @@
 .EXAMPLE
    PS> $wh = 'https://outlook.office365.com/webhook/a1269812-6d10-44b1-abc5-b84f93580ba0@9e7b80c7-d1eb-4b52-8582-76f921e416d9/IncomingWebhook/3fdd6767bae44ac58e5995547d66a4e4/f332c8d9-3397-4ac5-957b-b8e3fc465a8c'
    PS> $red = 'FF0000'
-   PS> Invoke-MicrosoftTeamsPost -WebhookURL $wh -Title 'Alert!' -Body 'Something has broken on [Server](http://localhost/)!' -ThemeColor $red
+   PS> Invoke-MicrosoftTeamsPost -WebhookUri $wh -Title 'Alert!' -Body 'Something has broken on **server**!' -ThemeColor $red -ButtonTitle 'Go to dashboard' -ButtonUri 'http://dashboard/'
 .NOTES
    Version:        1.0.2
    Author:         Cory Calahan
    Date:           2017-03-27
-   Purpose/Change: Added buttons (potentialAction)
+   Purpose/Change: Added buttons (PotentialAction)
    Version:        1.0.1
    Author:         Cory Calahan
    Date:           2017-03-24
@@ -60,7 +60,7 @@ function Invoke-MicrosoftTeamsPost
                    ParameterSetName='Default')]
         [Parameter(Mandatory=$true,
                    Position=0,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [ValidateNotNull()]
         [ValidateNotNullOrEmpty()]
         [Alias('Webhook','WebhookUrl')] 
@@ -72,7 +72,7 @@ function Invoke-MicrosoftTeamsPost
                    ParameterSetName='Default')]
         [Parameter(Mandatory=$false,
                    Position=1,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [AllowNull()]
         [AllowEmptyString()]
         [string]
@@ -83,7 +83,7 @@ function Invoke-MicrosoftTeamsPost
                    ParameterSetName='Default')]
         [Parameter(Mandatory=$true,
                    Position=2,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [string]
         [Alias('Markdown')]
         $Body,
@@ -93,19 +93,19 @@ function Invoke-MicrosoftTeamsPost
                    ParameterSetName='Default')]
         [Parameter(Mandatory=$false,
                    Position=3,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [ValidatePattern('^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')]
         [string]
         [Alias('Color')]
         $ThemeColor,
         [Parameter(Mandatory=$true,
                    Position=4,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [string]
         $ButtonTitle,
         [Parameter(Mandatory=$true,
                    Position=5,
-                   ParameterSetName='potentialAction')]
+                   ParameterSetName='PotentialAction')]
         [string]
         $ButtonUri
     )
@@ -121,8 +121,7 @@ function Invoke-MicrosoftTeamsPost
         $data.Add('text',$Body)
         if ($ButtonTitle)
         {
-            $data.Add('potentialAction',@(
-                            @{
+            $data.Add('potentialAction',@(@{
                                 '@context'='http://schema.org'
                                 '@type'='ViewAction'
                                 'name'="$ButtonTitle"
@@ -131,8 +130,6 @@ function Invoke-MicrosoftTeamsPost
                             )
                      )
         }
-
-
         Write-Verbose -Message "Data to sent: $($data | Out-String)"
     }
     Process
